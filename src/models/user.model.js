@@ -5,61 +5,65 @@ import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
     {
-    username: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
-        index: true
-    },
-    fullName: {
-        type: String,
-        required: true,
-        trim: true,
-        index: true
-    },
+        username: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
+            index: true
+        },
+        fullName: {
+            type: String,
+            required: true,
+            trim: true,
+            index: true
+        },
 
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true
-    },
-    password: {
-        type: String,
-        required: [true, "Password is required"]
-    },
-    watchhistory: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "Video"
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true
+        },
+        password: {
+            type: String,
+            required: [true, "Password is required"]
+        },
+        watchhistory: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "Video"
+            }
+        ],
+        avatar: {
+            type: {
+                url: String,
+                public_id: String,
+            },
+            required: true,
+        },
+        coverImage: {
+            url: String,
+            public_id: String,
+        },
+        refreshToken: {
+            type: String,
         }
-    ],
-    avatar: {
-        type: String,
-        required: true
-    },
-    coverImage: {
-        type: String,
-    },
-    refreshToken: {
-        type: String,
     }
-}
-, { timestamps: true });
+    , { timestamps: true });
 
-userSchema.pre("save" , async function() {
-    if(!this.isModified("password")) return;
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) return;
     this.password = await bcrypt.hash(this.password, 10);
- });
+});
 
-userSchema.methods.isPasswordValid = async function(password){
-    return await bcrypt.compare(password , this.password);
+userSchema.methods.isPasswordValid = async function (password) {
+    return await bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.generateAccessToken = function(){
+userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -73,7 +77,7 @@ userSchema.methods.generateAccessToken = function(){
         }
     )
 };
-userSchema.methods.generateRefreshToken = function(){
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
             _id: this._id

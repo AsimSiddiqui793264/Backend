@@ -48,8 +48,14 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         password,
         username: username.toLowerCase(),
-        avatar: avatarUploadResponse.url,
-        coverImage: coverImageUploadResponse?.url || ""
+        avatar: {
+            url: avatarUploadResponse.url,
+            public_id: avatarUploadResponse.public_id
+        },
+        coverImage: {
+            url: coverImageUploadResponse?.url || "",
+            public_id: coverImageUploadResponse?.public_id || ""
+        }
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -256,6 +262,16 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
+const deleteFromCloudinary = async (public_id) =>{
+   try {
+    if (public_id) {
+        await cloudinary.uploader.destroy(public_id);
+    }
+   } catch (error) {
+    console.log("Error while deleting old from cloudinary" , error);
+   }
+}
+
 const updateUserAvatar = asyncHandler(async (req, res) => {
 
     const avatarLocalPath = req.file?.path;
@@ -270,6 +286,12 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Failed to upload avatar");
     }
 
+    const userData = await User.findById(req.user?._id);
+
+    if (userData?.avatar?.public_id) {
+        await deleteFromCloudinary(userData.avatar.public_id);
+    };
+    
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -297,6 +319,12 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     if (!coverImage) {
         throw new ApiError(400, "Failed to upload cover image");
     }
+
+  const userData = await User.findById(req.user?._id);
+
+    if (userData?.coverImage?.public_id) {
+        await deleteFromCloudinary(userData.coverImage.public_id);
+    };
 
     const user = await User.findByIdAndUpdate(
         req.user?._id,
