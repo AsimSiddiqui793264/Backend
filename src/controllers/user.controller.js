@@ -111,10 +111,14 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
-    const loggedInUser = await User.findById(user._id)
-        .select("-password -refreshToken");
+    // const loggedInUser = await User.findById(user._id)
+    //     .select("-password -refreshToken");
 
-    if (!loggedInUser) {
+    const loggedInUser = user.toObject();
+    delete loggedInUser.password;
+    delete loggedInUser.refreshToken;
+
+        if (!loggedInUser) {
         throw new ApiError(500, "Something went wrong while logging in the user");
     };
 
@@ -297,7 +301,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         req.user?._id,
         {
             $set: {
-                avatar: avatar.url
+                avatar: {
+                    url : avatar.url,
+                    public_id : avatar.public_id
+                }
             }
         },
         { new: true }
@@ -331,7 +338,10 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
         req.user?._id,
         {
             $set: {
-                coverImage: coverImage.url
+                coverImage: {
+                    url : coverImage.url,
+                    public_id : coverImage.public_id
+                }
             }
         },
         { new: true }
@@ -422,7 +432,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         );
 });
 
-const getUserWatchHistory = asyncHandler(async (req , res) =>{
+const getUserWatchHistory = asyncHandler(async (req, res) => {
 
     const user = await User.aggregate([
         {
@@ -455,9 +465,9 @@ const getUserWatchHistory = asyncHandler(async (req , res) =>{
                         }
                     },
                     {
-                        $addFields:{
-                            owner:{
-                                $first:"$owner"
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
                             }
                         }
                     }
@@ -484,5 +494,5 @@ export {
     , updateUserCoverImage
     , getCurrentUser
     , getUserChannelProfile
-    , getUserWatchHistory           
+    , getUserWatchHistory
 };
